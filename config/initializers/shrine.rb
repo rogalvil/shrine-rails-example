@@ -15,11 +15,20 @@ if Rails.env.production?
     store: Shrine::Storage::S3.new(**s3_options),
   }
 else
-  require "shrine/storage/file_system"
+  require "shrine/storage/gridfs"
+
+  client = Mongo::Client.new("mongodb://127.0.0.1:27017/mbs")
+
+  options = {
+    client: client,
+    chunk_size: 1*1024*1024,
+    batch_size: 10*1024*1024,
+
+  }
 
   Shrine.storages = {
-    cache: Shrine::Storage::FileSystem.new("public", prefix: "uploads/cache"),
-    store: Shrine::Storage::FileSystem.new("public", prefix: "uploads"),
+    cache: Shrine::Storage::Gridfs.new(prefix: "temp", **options),
+    store: Shrine::Storage::Gridfs.new(prefix: "fs", **options),
   }
 end
 
@@ -29,6 +38,8 @@ Shrine.plugin :logging
 Shrine.plugin :determine_mime_type
 Shrine.plugin :cached_attachment_data
 Shrine.plugin :restore_cached_data
+
+
 
 if Rails.env.production?
   Shrine.plugin :presign_endpoint, presign_options: -> (request) {
@@ -45,6 +56,7 @@ if Rails.env.production?
 else
   Shrine.plugin :upload_endpoint
 end
+Shrine.plugin :download_endpoint, storages: Shrine.storages, prefix: "attachments"
 
 Shrine::Attacher.promote { |data| PromoteJob.perform_async(data) }
 Shrine::Attacher.delete { |data| DeleteJob.perform_async(data) }

@@ -1,7 +1,11 @@
 Rails.application.routes.draw do
+
   root to: 'albums#index'
 
   resources :albums
+
+  mount Shrine.download_endpoint => "/attachments"
+
 
   if Rails.env.production?
     mount Shrine.presign_endpoint(:cache) => "/s3/params"

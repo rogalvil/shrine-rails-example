@@ -12,6 +12,9 @@ gem 'dotenv-rails'
 
 # Shrine
 gem 'shrine', '~> 2.11'
+gem 'shrine-gridfs'
+gem "roda" # dependency of the download_endpoint plugin
+
 gem 'aws-sdk-s3', '~> 1.2'
 gem 'image_processing', '~> 1.0'
 
